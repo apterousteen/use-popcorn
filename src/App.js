@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { tempMovieData, tempWatchedData } from './tempData';
-
-const calcAverage = (arr) =>
-  Math.round(arr.reduce((acc, cur, _, arr) => acc + cur / arr.length, 0));
+import { calcAverage } from './helpers';
+import StarRating from './StarRating';
 
 export default function App() {
   const [movies, setMovies] = useState(tempMovieData);

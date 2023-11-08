@@ -1,38 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { tempMovieData, tempWatchedData } from './tempData';
 import { calcAverage } from './helpers';
 import StarRating from './StarRating';
 
-// TODO: pagination
-const API_URL = 'https://www.omdbapi.com/?apikey=6e1f94e4';
-
 export default function App() {
-  const [movies, setMovies] = useState([]);
+  const [movies, setMovies] = useState(tempMovieData);
   const [watched, setWatched] = useState(tempWatchedData);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchMovies = async () => {
-      setIsLoading(true);
-      const res = await fetch(`${API_URL}&s=matrix`);
-      const data = await res.json();
-      setMovies(data.Search);
-      setIsLoading(false);
-    };
-
-    fetchMovies();
-  }, []);
 
   return (
     <>
-      <Nav>
-        <SearchBar />
-        <NumResults movies={movies} />
-      </Nav>
+      <Nav movies={movies} />
 
       <Main>
         <Container>
-          {isLoading ? <Loader /> : <MovieList movies={movies} />}
+          <MovieList movies={movies} />
         </Container>
 
         <Container>
@@ -44,27 +25,17 @@ export default function App() {
   );
 }
 
-function Loader() {
-  return (
-    <div className="loader">
-      <img
-        className="loading-icon"
-        src="/loading-icon.svg"
-        alt="loading icon"
-      />
-      <p>Loading...</p>
-    </div>
-  );
-}
-
-function Nav({ children }) {
+function Nav({ movies }) {
   return (
     <nav className="nav-bar">
       <div className="logo">
         <span role="img">🍿</span>
         <h1>usePopcorn</h1>
       </div>
-      {children}
+      <SearchBar />
+      <p className="num-results">
+        Found <strong>{movies.length}</strong> results
+      </p>
     </nav>
   );
 }
@@ -81,14 +52,6 @@ function SearchBar() {
       value={query}
       onChange={(e) => setQuery(e.target.value)}
     />
-  );
-}
-
-function NumResults({ movies }) {
-  return (
-    <p className="num-results">
-      Found <strong>{movies.length}</strong> results
-    </p>
   );
 }
 

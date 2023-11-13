@@ -10,29 +10,60 @@ export default function App() {
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState(tempWatchedData);
   const [isLoading, setIsLoading] = useState(false);
+  const [query, setQuery] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     const fetchMovies = async () => {
-      setIsLoading(true);
-      const res = await fetch(`${API_URL}&s=matrix`);
-      const data = await res.json();
-      setMovies(data.Search);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        setErrorMsg('');
+        const res = await fetch(`${API_URL}&s=${query}`);
+
+        if (!res.ok) throw new Error('Something went wrong');
+
+        const data = await res.json();
+
+        if (data.Error) throw new Error(data.Error);
+
+        setMovies(data.Search);
+      } catch (e) {
+        console.error(e.message);
+        setErrorMsg(e.message);
+        setMovies([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    fetchMovies();
-  }, []);
+    if (query.length < 3) {
+      setMovies([]);
+      setErrorMsg('');
+      return;
+    }
+
+    // fetch after 600 ms after typing
+    const delayDebounce = setTimeout(() => {
+      console.log(query);
+      fetchMovies();
+    }, 600);
+
+    // cleanup function
+    return () => clearTimeout(delayDebounce);
+  }, [query]);
 
   return (
     <>
       <Nav>
-        <SearchBar />
+        <SearchBar query={query} onSearch={setQuery} />
         <NumResults movies={movies} />
       </Nav>
 
       <Main>
         <Container>
-          {isLoading ? <Loader /> : <MovieList movies={movies} />}
+          {isLoading && <Loader />}
+          {!isLoading && !errorMsg && <MovieList movies={movies} />}
+          {errorMsg && <ErrorMsg message={errorMsg} />}
         </Container>
 
         <Container>
@@ -57,6 +88,15 @@ function Loader() {
   );
 }
 
+function ErrorMsg({ message }) {
+  return (
+    <p className="error">
+      <span>🔺</span>
+      {message}
+    </p>
+  );
+}
+
 function Nav({ children }) {
   return (
     <nav className="nav-bar">
@@ -69,9 +109,7 @@ function Nav({ children }) {
   );
 }
 
-function SearchBar() {
-  const [query, setQuery] = useState('');
-
+function SearchBar({ query, onSearch }) {
   return (
     <input
       name="search-bar"
@@ -79,7 +117,7 @@ function SearchBar() {
       type="text"
       placeholder="Search movies..."
       value={query}
-      onChange={(e) => setQuery(e.target.value)}
+      onChange={(e) => onSearch(e.target.value)}
     />
   );
 }
@@ -120,7 +158,14 @@ function MovieList({ movies }) {
 function Movie({ movie }) {
   return (
     <li key={movie.imdbID}>
-      <img src={movie.Poster} alt={`${movie.Title} poster`} />
+      <img
+        src={
+          movie.Poster !== 'N/A'
+            ? movie.Poster
+            : 'https://img.icons8.com/ios-filled/50/adb5bd/movie.png'
+        }
+        alt={`${movie.Title} poster`}
+      />
       <h3>{movie.Title}</h3>
       <div>
         <p>

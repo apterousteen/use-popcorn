@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
 import { tempMovieData, tempWatchedData } from './tempData';
-import { calcAverage, fieldExists } from './helpers';
+import { calcAverage, fieldExists, handleImgError } from './helpers';
 import StarRating from './StarRating';
 
-// TODO: infinite scroll ?
 const API_URL = 'https://www.omdbapi.com/?apikey=6e1f94e4';
+const BROKEN_FILM_IMG = 'https://img.icons8.com/ios-filled/50/adb5bd/movie.png';
 
 export default function App() {
   const [movies, setMovies] = useState([]);
-  const [watched, setWatched] = useState(tempWatchedData);
+  const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [query, setQuery] = useState('matrix');
+  const [query, setQuery] = useState('inception');
   const [errorMsg, setErrorMsg] = useState('');
   const [selectedId, setSelectedId] = useState(null);
 
@@ -45,7 +45,6 @@ export default function App() {
 
     // fetch after 600 ms after typing
     const delayDebounce = setTimeout(() => {
-      console.log(query);
       fetchMovies();
     }, 600);
 
@@ -59,6 +58,14 @@ export default function App() {
 
   const handleCloseMovie = () => {
     setSelectedId(null);
+  };
+
+  const handleAddWatched = (movie) => {
+    setWatched((watched) => [...watched, movie]);
+  };
+
+  const handleDeleteWatched = (id) => {
+    setWatched((watched) => watched.filter((m) => m.imdbID !== id));
   };
 
   return (
@@ -83,11 +90,19 @@ export default function App() {
 
         <Container>
           {selectedId ? (
-            <MovieDetails selectedId={selectedId} onClose={handleCloseMovie} />
+            <MovieDetails
+              selectedId={selectedId}
+              watched={watched}
+              onCloseMovie={handleCloseMovie}
+              onAddWatched={handleAddWatched}
+            />
           ) : (
             <>
               <WatchedSummary watched={watched} />
-              <WatchedMovieList watched={watched} />
+              <WatchedMovieList
+                watched={watched}
+                onDeleteWatched={handleDeleteWatched}
+              />
             </>
           )}
         </Container>
@@ -189,11 +204,8 @@ function Movie({ movie, selectedId, onSelect }) {
       key={movie.imdbID}
     >
       <img
-        src={
-          fieldExists(movie.Poster)
-            ? movie.Poster
-            : 'https://img.icons8.com/ios-filled/50/adb5bd/movie.png'
-        }
+        onError={handleImgError}
+        src={fieldExists(movie.Poster) ? movie.Poster : BROKEN_FILM_IMG}
         alt={`${movie.Title} poster`}
       />
       <h3>{movie.Title}</h3>
@@ -207,17 +219,17 @@ function Movie({ movie, selectedId, onSelect }) {
   );
 }
 
-function MovieDetails({ selectedId, onClose }) {
+function MovieDetails({ selectedId, watched, onCloseMovie, onAddWatched }) {
   const [movie, setMovie] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [userRating, setUserRating] = useState(0);
 
-  // TODO: set rating
-  const [rating, setRating] = useState(0);
+  const selectedMovie = watched.find((m) => m.imdbID === selectedId);
+  const isWatchedAlready = !!selectedMovie;
 
   const {
     Title: title,
-    Year: year,
     Poster: poster,
     Runtime: runtime,
     imdbRating,
@@ -258,17 +270,42 @@ function MovieDetails({ selectedId, onClose }) {
     fetchMovieDetailsUsingId();
   }, [selectedId]);
 
+  const handleAdd = () => {
+    const newWatchedMovie = {
+      imdbID: selectedId,
+      title: movie.Title,
+      year: movie.Year,
+      poster: movie.Poster,
+      runtime: +movie.Runtime.split(' ')[0],
+      imdbRating: +movie.imdbRating,
+      userRating: userRating,
+    };
+
+    onAddWatched(newWatchedMovie);
+    onCloseMovie();
+  };
+
   return (
     <div className="details">
       {isLoading && <Loader />}
       {errorMsg && <ErrorMsg message={errorMsg} />}
       {!isLoading && !errorMsg && (
         <>
-          <button title="Close movie" className="btn-back" onClick={onClose}>
+          <button
+            title="Close movie"
+            className="btn-back"
+            onClick={onCloseMovie}
+          >
             &larr;
           </button>
           <header>
-            {fieldExists(poster) && <img src={poster} alt="poster" />}
+            {fieldExists(poster) && (
+              <img
+                onError={(e) => handleImgError(e, true)}
+                src={poster}
+                alt="poster"
+              />
+            )}
             <div className="details-overview">
               <h2>{title}</h2>
               <p>
@@ -290,12 +327,22 @@ function MovieDetails({ selectedId, onClose }) {
           </header>
           <section>
             <div className="rating">
-              <StarRating
-                maxRating={10}
-                starSize={24}
-                onSetRating={setRating}
-              />
-              {rating > 0 && <button className="btn-add">+ Add to list</button>}
+              {!isWatchedAlready ? (
+                <>
+                  <StarRating
+                    maxRating={10}
+                    starSize={24}
+                    onSetRating={setUserRating}
+                  />
+                  {userRating > 0 && (
+                    <button className="btn-add" onClick={handleAdd}>
+                      + Add to list
+                    </button>
+                  )}
+                </>
+              ) : (
+                <p>You rated this movie {selectedMovie.userRating} ⭐</p>
+              )}
             </div>
             <p>
               <em>{fieldExists(plot) ? plot : 'No description'}</em>
@@ -339,35 +386,50 @@ function WatchedSummary({ watched }) {
   );
 }
 
-function WatchedMovieList({ watched }) {
+function WatchedMovieList({ watched, onDeleteWatched }) {
   return (
     <ul className="list">
       {watched.map((m) => (
-        <WatchedMovie movie={m} key={m.imdbID} />
+        <WatchedMovie
+          movie={m}
+          key={m.imdbID}
+          onDeleteWatched={onDeleteWatched}
+        />
       ))}
     </ul>
   );
 }
 
-function WatchedMovie({ movie }) {
+function WatchedMovie({ movie, onDeleteWatched }) {
   return (
     <li>
-      <img src={movie.Poster} alt={`${movie.Title} poster`} />
-      <h3>{movie.Title}</h3>
+      <img
+        onError={handleImgError}
+        src={fieldExists(movie.poster) ? movie.poster : BROKEN_FILM_IMG}
+        alt={`${movie.title} poster`}
+      />
+      <h3>{movie.title}</h3>
       <div>
         <p>
           <span>⭐️</span>
-          <span>{movie.imdbRating}</span>
+          <span>{fieldExists(movie.imdbRating) && movie.imdbRating}</span>
         </p>
         <p>
           <span>🌟</span>
-          <span>{movie.userRating}</span>
+          <span>{fieldExists(movie.userRating) && movie.userRating}</span>
         </p>
         <p>
           <span>⏳</span>
-          <span>{movie.runtime} min</span>
+          <span>{fieldExists(movie.runtime) && movie.runtime} min</span>
         </p>
       </div>
+      <button
+        className="btn-delete"
+        title="delete movie"
+        onClick={() => onDeleteWatched(movie.imdbID)}
+      >
+        &times;
+      </button>
     </li>
   );
 }

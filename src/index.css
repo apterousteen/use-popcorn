@@ -62,11 +62,6 @@ body {
     width: 1.6rem;
 }
 
-.box::-webkit-scrollbar-track {
-    margin-top: 0.4rem;
-    margin-bottom: 0.4rem;
-}
-
 .box::-webkit-scrollbar-thumb {
     border-radius: 10rem;
     background-color: var(--color-background-100);
@@ -186,6 +181,10 @@ body {
     background-color: var(--color-background-100);
 }
 
+.list.list-movies .selected {
+    background-color: var(--color-background-100);
+}
+
 .list img {
     width: 100%;
     grid-row: 1 / -1;
@@ -274,7 +273,7 @@ body {
     gap: 1.6rem;
 }
 
-.details img {
+.details img:not(.loading-icon) {
     width: 33%;
 }
 
@@ -337,25 +336,15 @@ body {
 }
 
 .btn-back {
-    position: absolute;
-    top: 0.6rem;
-    left: 0.6rem;
-    height: 3.2rem;
-    aspect-ratio: 1;
-    border-radius: 50%;
+    border-radius: 0.5rem;
+    padding: 0.1rem 0.8rem 0.3rem;
+    margin: 0.8rem;
     border: none;
-    /* background-color: var(--color-text); */
-    background-color: #fff;
-    color: var(--color-background-500);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8);
+    background-color: var(--color-background-900);
+    color: var(--color-text);
     font-family: sans-serif;
-    font-size: 2.4rem;
-    font-weight: bold;
+    font-size: 1.8rem;
     cursor: pointer;
-    z-index: 999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /*

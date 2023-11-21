@@ -276,6 +276,10 @@ body {
     width: 33%;
 }
 
+.imgHidden {
+    display: none;
+}
+
 .details-overview {
     width: 100%;
     padding: 2.4rem 3rem;

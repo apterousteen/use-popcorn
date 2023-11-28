@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { tempMovieData, tempWatchedData } from './tempData';
 import { calcAverage } from './helpers';
-import StarRating from './StarRating';
+import StarRating from './components/StarRating';
 
 export default function App() {
   const [movies, setMovies] = useState(tempMovieData);

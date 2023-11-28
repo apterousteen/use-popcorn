@@ -10,7 +10,7 @@ export default function App() {
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [query, setQuery] = useState('inception');
+  const [query, setQuery] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [selectedId, setSelectedId] = useState(null);
 
@@ -45,6 +45,7 @@ export default function App() {
 
     // fetch after 600 ms after typing
     const delayDebounce = setTimeout(() => {
+      handleCloseMovie();
       fetchMovies();
     }, 600);
 
@@ -225,8 +226,8 @@ function MovieDetails({ selectedId, watched, onCloseMovie, onAddWatched }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [userRating, setUserRating] = useState(0);
 
-  const selectedMovie = watched.find((m) => m.imdbID === selectedId);
-  const isWatchedAlready = !!selectedMovie;
+  const selectedWatchedMovie = watched.find((m) => m.imdbID === selectedId);
+  const isWatchedAlready = !!selectedWatchedMovie;
 
   const {
     Title: title,
@@ -241,11 +242,27 @@ function MovieDetails({ selectedId, watched, onCloseMovie, onAddWatched }) {
   } = movie;
 
   useEffect(() => {
+    if (!title) return;
+
+    document.title = `usePopcorn // ${title}`;
+
+    return () => {
+      document.title = `usePopcorn // movie tracker`;
+    };
+  }, [title]);
+
+  useEffect(() => {
+    // 1. создаем контроллер вне fetch функции
+    const controller = new AbortController();
+
     const fetchMovieDetailsUsingId = async () => {
       try {
         setIsLoading(true);
         setErrorMsg('');
-        const res = await fetch(`${API_URL}&i=${selectedId}`);
+        const res = await fetch(`${API_URL}&i=${selectedId}`, {
+          // 2. добавляем сигнал в fetch options
+          signal: controller.signal,
+        });
 
         if (!res.ok) throw new Error('Something went wrong');
 
@@ -254,9 +271,12 @@ function MovieDetails({ selectedId, watched, onCloseMovie, onAddWatched }) {
         if (data.Error) throw new Error(data.Error);
 
         setMovie(data);
+
+        // 5. зачищаем ошибку в state
+        setErrorMsg('');
       } catch (e) {
-        console.error(e.message);
-        setErrorMsg(e.message);
+        // 4. обрабатываем ошибку только если это не AbortError
+        if (e.name !== 'AbortError') setErrorMsg(e.message);
         setMovie({});
       } finally {
         setIsLoading(false);
@@ -268,7 +288,26 @@ function MovieDetails({ selectedId, watched, onCloseMovie, onAddWatched }) {
     }
 
     fetchMovieDetailsUsingId();
+
+    return () => {
+      // 3. в cleanup функции прерываем предыдущий запрос при ре-рендере
+      controller.abort();
+    };
   }, [selectedId]);
+
+  useEffect(() => {
+    const handleKeydownEsc = (e) => {
+      if (e.key === 'Escape') {
+        onCloseMovie();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeydownEsc);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeydownEsc);
+    };
+  }, [onCloseMovie]);
 
   const handleAdd = () => {
     const newWatchedMovie = {
@@ -292,7 +331,7 @@ function MovieDetails({ selectedId, watched, onCloseMovie, onAddWatched }) {
       {!isLoading && !errorMsg && (
         <>
           <button
-            title="Close movie"
+            title="Close movie (Esc)"
             className="btn-back"
             onClick={onCloseMovie}
           >
@@ -341,7 +380,7 @@ function MovieDetails({ selectedId, watched, onCloseMovie, onAddWatched }) {
                   )}
                 </>
               ) : (
-                <p>You rated this movie {selectedMovie.userRating} ⭐</p>
+                <p>You rated this movie {selectedWatchedMovie.userRating} ⭐</p>
               )}
             </div>
             <p>

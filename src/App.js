@@ -14,11 +14,22 @@ import WatchedMovieList from './components/WatchedMovieList';
 
 export default function App() {
   const [movies, setMovies] = useState([]);
-  const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [selectedId, setSelectedId] = useState(null);
+  const [watched, setWatched] = useState(() => {
+    const stored = localStorage.getItem('watchedMovies');
+    return JSON.parse(stored) || [];
+  });
+
+  const isMobile = window.matchMedia(
+    'only screen and (max-width: 61.25em)'
+  ).matches;
+
+  useEffect(() => {
+    localStorage.setItem('watchedMovies', JSON.stringify(watched));
+  }, [watched]);
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -83,17 +94,33 @@ export default function App() {
       </Nav>
 
       <Main>
-        <Container>
-          {isLoading && <Loader />}
-          {!isLoading && !errorMsg && (
-            <MovieList
-              movies={movies}
-              selectedId={selectedId}
-              onSelect={handleSelectMovie}
-            />
-          )}
-          {errorMsg && <ErrorMsg message={errorMsg} />}
-        </Container>
+        {isMobile ? (
+          movies.length > 0 && (
+            <Container>
+              {isLoading && <Loader />}
+              {!isLoading && !errorMsg && (
+                <MovieList
+                  movies={movies}
+                  selectedId={selectedId}
+                  onSelect={handleSelectMovie}
+                />
+              )}
+              {errorMsg && <ErrorMsg message={errorMsg} />}
+            </Container>
+          )
+        ) : (
+          <Container>
+            {isLoading && <Loader />}
+            {!isLoading && !errorMsg && (
+              <MovieList
+                movies={movies}
+                selectedId={selectedId}
+                onSelect={handleSelectMovie}
+              />
+            )}
+            {errorMsg && <ErrorMsg message={errorMsg} />}
+          </Container>
+        )}
 
         <Container>
           {selectedId ? (

@@ -4,6 +4,7 @@ import {fieldExists, handleImgError} from '../helpers';
 import Loader from './Loader';
 import ErrorMsg from './ErrorMsg';
 import StarRating from './StarRating';
+import {useShortcutKey} from '../hooks/useShortcutKey';
 
 export default function MovieDetails({
                                        selectedId,
@@ -91,19 +92,7 @@ export default function MovieDetails({
     };
   }, [selectedId]);
 
-  useEffect(() => {
-    const handleKeydownEsc = (e) => {
-      if (e.key === 'Escape') {
-        onCloseMovie();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeydownEsc);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeydownEsc);
-    };
-  }, [onCloseMovie]);
+  useShortcutKey('Escape', onCloseMovie);
   const handleAdd = () => {
     const newWatchedMovie = {
       imdbID: selectedId,

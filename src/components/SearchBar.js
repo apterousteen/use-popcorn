@@ -1,23 +1,28 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { useShortcutKey } from '../hooks/useShortcutKey';
 
 export default function SearchBar({ query, onSearch }) {
   // 1 create
   const searchField = useRef(null);
 
   // 3 useEffect because the ref will be added only after the component mounts
-  useEffect(() => {
-    const handleKeydownEnter = (e) => {
-      if (e.key === 'Enter') {
-        searchField.current.focus();
-      }
-    };
+  // useEffect(() => {
+  //   const handleKeydownEnter = (e) => {
+  //     if (e.key === 'Enter') {
+  //       searchField.current.focus();
+  //     }
+  //   };
+  //
+  //   document.addEventListener('keydown', handleKeydownEnter);
+  //
+  //   return () => {
+  //     document.removeEventListener('keydown', handleKeydownEnter);
+  //   };
+  // }, []);
 
-    document.addEventListener('keydown', handleKeydownEnter);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeydownEnter);
-    };
-  }, []);
+  useShortcutKey('Enter', () => {
+    searchField.current.focus();
+  });
 
   return (
     <div className="searchbar-container">

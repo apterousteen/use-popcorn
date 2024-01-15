@@ -12,6 +12,7 @@ import WatchedSummary from './components/WatchedSummary';
 import WatchedMovieList from './components/WatchedMovieList';
 import { useMovies } from './hooks/useMovies';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import Pagination from './components/Pagination';
 
 export default function App() {
   const [query, setQuery] = useState('');
@@ -49,15 +50,18 @@ export default function App() {
 
       <Main>
         {isMobile ? (
-          movies.length > 0 && (
+          query !== '' && (
             <Container>
               {isLoading && <Loader />}
               {!isLoading && !errorMsg && (
-                <MovieList
-                  movies={movies}
-                  selectedId={selectedId}
-                  onSelect={handleSelectMovie}
-                />
+                <>
+                  <MovieList
+                    movies={movies}
+                    selectedId={selectedId}
+                    onSelect={handleSelectMovie}
+                  />
+                  {movies.length > 0 && <Pagination />}
+                </>
               )}
               {errorMsg && <ErrorMsg message={errorMsg} />}
             </Container>
@@ -66,11 +70,14 @@ export default function App() {
           <Container>
             {isLoading && <Loader />}
             {!isLoading && !errorMsg && (
-              <MovieList
-                movies={movies}
-                selectedId={selectedId}
-                onSelect={handleSelectMovie}
-              />
+              <>
+                <MovieList
+                  movies={movies}
+                  selectedId={selectedId}
+                  onSelect={handleSelectMovie}
+                />
+                {movies.length > 0 && <Pagination />}
+              </>
             )}
             {errorMsg && <ErrorMsg message={errorMsg} />}
           </Container>

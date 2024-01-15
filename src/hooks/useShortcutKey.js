@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 export function useShortcutKey(key = '', actionCallback = () => null) {
   useEffect(() => {
     const handleKeydown = (e) => {
-      if (e.key.toLowerCase() === key.toLowerCase()) {
+      if (e.key?.toLowerCase() === key?.toLowerCase()) {
         actionCallback();
       }
     };

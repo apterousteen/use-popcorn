@@ -44,7 +44,8 @@ body {
 
 .main {
     margin-top: 2.4rem;
-    height: calc(100vh - 7.2rem - 3 * 2.4rem);
+    min-height: calc(100vh - 7.2rem - 3 * 2.4rem);
+    max-height: 120rem;
     display: flex;
     gap: 2.4rem;
     justify-content: center;
@@ -193,6 +194,10 @@ body {
 
 .btn-page:hover {
     background-color: var(--color-background-hover);
+}
+
+.btn-page__hidden {
+    visibility: hidden;
 }
 
 .list {
@@ -436,6 +441,7 @@ FONT SIZE SYSTEM (px)
 
     .main {
         height: auto;
+        max-height: none;
         flex-direction: column;
         justify-content: normal;
     }
@@ -444,7 +450,7 @@ FONT SIZE SYSTEM (px)
         width: 100%;
         max-width: none;
         min-height: 50vh;
-        max-height: calc(100vh - 2 * 2.4rem);
+        max-height: none;
     }
 
     .box:first-of-type {

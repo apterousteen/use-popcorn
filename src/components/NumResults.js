@@ -1,7 +1,11 @@
-export default function NumResults({ movies }) {
+export default function NumResults({ totalResults }) {
   return (
-    <p className="num-results">
-      Found <strong>{movies.length}</strong> results
-    </p>
+    <>
+      {totalResults > 0 && (
+        <p className="num-results">
+          Found <strong>{totalResults}</strong> results
+        </p>
+      )}
+    </>
   );
 }

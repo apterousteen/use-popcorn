@@ -1,17 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { API_URL } from '../config';
 
-export function useMovies(query, handleCloseMovie) {
+export function useMovies(query, handleCloseMovie, page, setPage) {
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [totalResults, setTotalResults] = useState(0);
+  const pageCount = useRef(1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, setPage]);
 
   useEffect(() => {
     const fetchMovies = async () => {
       try {
         setIsLoading(true);
         setErrorMsg('');
-        const res = await fetch(`${API_URL}&s=${query}`);
+        const res = await fetch(`${API_URL}&s=${query}&page=${page}`);
 
         if (!res.ok) throw new Error('Something went wrong');
 
@@ -20,10 +26,13 @@ export function useMovies(query, handleCloseMovie) {
         if (data.Error) throw new Error(data.Error);
 
         setMovies(data.Search);
+        setTotalResults(+data.totalResults);
+        pageCount.current = Math.ceil(+data.totalResults / 10);
       } catch (e) {
         console.error(e.message);
         setErrorMsg(e.message);
         setMovies([]);
+        setTotalResults(0);
       } finally {
         setIsLoading(false);
       }
@@ -43,7 +52,7 @@ export function useMovies(query, handleCloseMovie) {
 
     // cleanup function
     return () => clearTimeout(delayDebounce);
-  }, [query, handleCloseMovie]);
+  }, [handleCloseMovie, page, query]);
 
-  return [movies, isLoading, errorMsg];
+  return [movies, isLoading, errorMsg, pageCount.current, totalResults];
 }

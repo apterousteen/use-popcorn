@@ -17,6 +17,7 @@ import Pagination from './components/Pagination';
 export default function App() {
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
+  const [page, setPage] = useState(1);
 
   const [watched, setWatched] = useLocalStorage([], 'watchedMovies');
 
@@ -39,13 +40,26 @@ export default function App() {
     setSelectedId(null);
   }, []);
 
-  const [movies, isLoading, errorMsg] = useMovies(query, handleCloseMovie);
+  const [movies, isLoading, errorMsg, pageCount, totalResults] = useMovies(
+    query,
+    handleCloseMovie,
+    page,
+    setPage
+  );
+
+  const handlePrevPage = () => {
+    setPage((p) => (p > 1 ? p - 1 : p));
+  };
+
+  const handleNextPage = () => {
+    setPage((p) => (p < pageCount ? p + 1 : p));
+  };
 
   return (
     <>
       <Nav>
         <SearchBar query={query} onSearch={setQuery} />
-        <NumResults movies={movies} />
+        <NumResults totalResults={totalResults} />
       </Nav>
 
       <Main>
@@ -60,7 +74,14 @@ export default function App() {
                     selectedId={selectedId}
                     onSelect={handleSelectMovie}
                   />
-                  {movies.length > 0 && <Pagination />}
+                  {movies.length > 0 && (
+                    <Pagination
+                      page={page}
+                      pageCount={pageCount}
+                      onNextPage={handleNextPage}
+                      onPrevPage={handlePrevPage}
+                    />
+                  )}
                 </>
               )}
               {errorMsg && <ErrorMsg message={errorMsg} />}
@@ -76,7 +97,14 @@ export default function App() {
                   selectedId={selectedId}
                   onSelect={handleSelectMovie}
                 />
-                {movies.length > 0 && <Pagination />}
+                {movies.length > 0 && (
+                  <Pagination
+                    page={page}
+                    pageCount={pageCount}
+                    onNextPage={handleNextPage}
+                    onPrevPage={handlePrevPage}
+                  />
+                )}
               </>
             )}
             {errorMsg && <ErrorMsg message={errorMsg} />}

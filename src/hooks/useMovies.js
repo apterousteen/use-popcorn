@@ -41,6 +41,7 @@ export function useMovies(query, handleCloseMovie, page, setPage) {
     if (query.length < 3) {
       setMovies([]);
       setErrorMsg('');
+      setTotalResults(0);
       return;
     }
 
